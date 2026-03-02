@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="theme-color" content="#2563EB"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="旅行帳簿"/>
+  <title>旅行帳簿</title>
+  <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #2563EB; --blue-light: #EFF6FF; --red: #EF4444;
+  --green: #22C55E; --gray: #6B7280; --gray-light: #F3F4F6;
+  --border: #E5E7EB; --white: #fff; --text: #111827;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #F9FAFB; color: var(--text); min-height: 100vh; }
+#app { max-width: 480px; margin: 0 auto; min-height: 100vh;
+  background: var(--white); position: relative; }
+
+/* NAV */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; display: flex; background: var(--white);
+  border-top: 1px solid var(--border); z-index: 100; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0 14px; font-size: 10px; color: var(--gray); background: none;
+  border: none; cursor: pointer; gap: 3px; }
+.nav-btn.active { color: var(--blue); }
+.nav-btn svg { width: 22px; height: 22px; }
+
+/* HEADER */
+.header { display: flex; align-items: center; justify-content: space-between;
+  padding: 16px; border-bottom: 1px solid var(--border); background: var(--white);
+  position: sticky; top: 0; z-index: 50; }
+.header h1 { font-size: 18px; font-weight: 700; }
+.btn-icon { background: none; border: none; cursor: pointer; padding: 6px;
+  border-radius: 8px; color: var(--blue); }
+.btn-icon:hover { background: var(--blue-light); }
+
+/* PAGES */
+.page { padding: 16px; padding-bottom: 90px; }
+
+/* CARDS */
+.card { background: var(--white); border-radius: 12px; padding: 16px;
+  border: 1px solid var(--border); margin-bottom: 12px; cursor: pointer; }
+.card:hover { border-color: var(--blue); }
+.card-title { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+.card-sub { color: var(--gray); font-size: 13px; }
+.card-row { display: flex; justify-content: space-between; align-items: center; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px;
+  border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+  border: none; transition: opacity .15s; }
+.btn:hover { opacity: .85; }
+.btn-primary { background: var(--blue); color: var(--white); width: 100%;
+  justify-content: center; padding: 14px; font-size: 16px; }
+.btn-outline { background: var(--white); color: var(--blue);
+  border: 1.5px solid var(--blue); }
+.btn-danger { background: #FEE2E2; color: var(--red); }
+.fab { position: fixed; bottom: 76px; right: calc(50% - 228px);
+  background: var(--blue); color: var(--white); border: none; border-radius: 50%;
+  width: 54px; height: 54px; font-size: 26px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37,99,235,.4); display: flex;
+  align-items: center; justify-content: center; z-index: 99; }
+
+/* FORMS */
+.form-group { margin-bottom: 14px; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--gray);
+  margin-bottom: 6px; }
+input, select, textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 15px; outline: none; background: var(--white);
+  color: var(--text); font-family: inherit; }
+input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+textarea { resize: vertical; min-height: 70px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+.modal { background: var(--white); border-radius: 20px 20px 0 0; padding: 20px;
+  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  animation: slideUp .25s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+/* TABS */
+.tabs { display: flex; background: var(--gray-light); border-radius: 10px;
+  padding: 3px; margin-bottom: 16px; }
+.tab { flex: 1; text-align: center; padding: 8px; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; color: var(--gray); border: none;
+  background: none; transition: .15s; }
+.tab.active { background: var(--white); color: var(--blue);
+  box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+/* EXPENSE ROW */
+.expense-row { display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border); }
+.expense-icon { width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  background: var(--blue-light); flex-shrink: 0; }
+.expense-info { flex: 1; min-width: 0; }
+.expense-title { font-weight: 600; font-size: 15px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.expense-sub { color: var(--gray); font-size: 12px; }
+.expense-amount { text-align: right; font-weight: 700; font-size: 15px; }
+.expense-base { color: var(--gray); font-size: 11px; }
+
+/* BALANCE */
+.balance-row { display: flex; justify-content: space-between;
+  align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.balance-pos { color: var(--green); font-weight: 700; }
+.balance-neg { color: var(--red); font-weight: 700; }
+.settle-row { display: flex; align-items: center; gap: 8px;
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; background: var(--blue-light); color: var(--blue); }
+
+/* ITINERARY */
+.day-header { font-weight: 700; font-size: 14px; color: var(--blue);
+  padding: 10px 0 6px; border-bottom: 2px solid var(--blue-light); margin-bottom: 6px; }
+.item-row { display: flex; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--border); align-items: flex-start; }
+.item-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+.item-info .item-title { font-weight: 600; font-size: 15px; }
+.item-info .item-sub { color: var(--gray); font-size: 12px; }
+.item-time { color: var(--blue); font-size: 12px; font-weight: 600; }
+
+/* LOGIN */
+.login-wrap { display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 32px; gap: 20px; }
+.login-logo { font-size: 72px; }
+.login-title { font-size: 28px; font-weight: 800; }
+.error-msg { color: var(--red); font-size: 13px; text-align: center; }
+
+/* SCAN */
+.scan-area { border: 2.5px dashed var(--blue); border-radius: 16px;
+  padding: 32px; text-align: center; cursor: pointer; margin: 16px 0;
+  background: var(--blue-light); }
+.scan-area:hover { background: #DBEAFE; }
+.scan-result { background: var(--gray-light); border-radius: 12px;
+  padding: 16px; margin: 12px 0; }
+.scan-result-row { display: flex; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.scan-result-row:last-child { border-bottom: none; }
+
+/* INVITE */
+.invite-code { font-size: 40px; font-weight: 900; letter-spacing: 6px;
+  font-family: monospace; color: var(--blue); background: var(--blue-light);
+  padding: 16px 24px; border-radius: 14px; text-align: center; margin: 12px 0; }
+
+/* STATS */
+.stat-bar-row { margin-bottom: 10px; }
+.stat-bar-label { display: flex; justify-content: space-between;
+  font-size: 13px; margin-bottom: 4px; }
+.stat-bar-bg { background: var(--gray-light); border-radius: 99px; height: 8px; }
+.stat-bar-fill { background: var(--blue); border-radius: 99px; height: 8px;
+  transition: width .4s; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.chip { padding: 5px 12px; border-radius: 20px; font-size: 13px;
+  font-weight: 600; cursor: pointer; border: 1.5px solid var(--border);
+  background: var(--white); }
+.chip.selected { background: var(--blue); color: var(--white);
+  border-color: var(--blue); }
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+.section-title { font-size: 13px; font-weight: 700; color: var(--gray);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+.empty { text-align: center; color: var(--gray); padding: 40px 0; font-size: 15px; }
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  background: #1F2937; color: var(--white); padding: 10px 20px;
+  border-radius: 99px; font-size: 14px; z-index: 999; opacity: 0;
+  transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+// Inline Service Worker registration
+const swCode = `const CACHE = 'travel-app-v1';
+const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/manifest.json'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});`;
+if ('serviceWorker' in navigator) {
+  const blob = new Blob([swCode], {type: 'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+  </script>
+  <script type="module">
+
+// ── Firebase Config ──────────────────────────────────────────────
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut, updateProfile }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, onSnapshot, doc,
+  updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, getDoc, getDocs }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+
+// ⬇️ 換成你自己的 Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBjJQHISN5U0bNhuX8d-XVCcb1_yHEw9XQ",
+  authDomain: "travel-425a9.firebaseapp.com",
+  projectId: "travel-425a9",
+  storageBucket: "travel-425a9.firebasestorage.app",
+  messagingSenderId: "318981820085",
+  appId: "1:318981820085:web:a4fbf2a05090377913b8fc"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const storage = getStorage(fbApp);
+
+// ── State ─────────────────────────────────────────────────────────
+let state = {
+  user: null, trips: [], currentTrip: null,
+  itinerary: [], expenses: [], tab: 'itinerary',
+  unsubs: []
+};
+
+const CURRENCIES = ['HKD','USD','EUR','JPY','GBP','TWD','SGD','AUD','KRW','CNY'];
+const EXPENSE_CATS = [
+  {id:'food', label:'餐飲', icon:'🍜'},
+  {id:'transport', label:'交通', icon:'🚇'},
+  {id:'accommodation', label:'住宿', icon:'🏨'},
+  {id:'activity', label:'活動', icon:'🎡'},
+  {id:'shopping', label:'購物', icon:'🛍️'},
+  {id:'other', label:'其他', icon:'💼'}
+];
+const ITINERARY_TYPES = [
+  {id:'transport', label:'交通', icon:'✈️'},
+  {id:'accommodation', label:'住宿', icon:'🏨'},
+  {id:'attraction', label:'景點', icon:'📸'},
+  {id:'food', label:'餐飲', icon:'🍜'},
+  {id:'other', label:'其他', icon:'⭐'}
+];
+
+// ── Render entry ──────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  if (!state.user) { app.innerHTML = renderLogin(); bindLogin(); return; }
+  if (!state.currentTrip) { app.innerHTML = renderTripList(); bindTripList(); return; }
+  app.innerHTML = renderTripDetail();
+  bindTripDetail();
+}
+
+// ── Auth ──────────────────────────────────────────────────────────
+function renderLogin() {
+  return `<div class="login-wrap">
+    <div class="login-logo">✈️</div>
+    <div class="login-title">旅行帳簿</div>
+    <div id="auth-form" style="width:100%">
+      <div id="signup-name-wrap" style="display:none" class="form-group">
+        <label>姓名</label><input id="f-name" placeholder="你的名字"/>
+      </div>
+      <div class="form-group"><label>電郵</label>
+        <input id="f-email" type="email" placeholder="email@example.com"/>
+      </div>
+      <div class="form-group"><label>密碼</label>
+        <input id="f-pw" type="password" placeholder="最少6位"/>
+      </div>
+      <div id="auth-error" class="error-msg"></div>
+      <button class="btn btn-primary" id="auth-submit">登入</button>
+      <div style="text-align:center;margin-top:14px">
+        <button id="auth-toggle" style="background:none;border:none;color:var(--blue);font-size:14px;cursor:pointer">
+          未有帳號？立即註冊
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+function bindLogin() {
+  let isSignUp = false;
+  document.getElementById('auth-toggle').onclick = () => {
+    isSignUp = !isSignUp;
+    document.getElementById('signup-name-wrap').style.display = isSignUp ? 'block' : 'none';
+    document.getElementById('auth-submit').textContent = isSignUp ? '註冊' : '登入';
+    document.getElementById('auth-toggle').textContent = isSignUp ? '已有帳號？登入' : '未有帳號？立即註冊';
+  };
+  document.getElementById('auth-submit').onclick = async () => {
+    const email = document.getElementById('f-email').value;
+    const pw = document.getElementById('f-pw').value;
+    const errEl = document.getElementById('auth-error');
+    try {
+      if (isSignUp) {
+        const name = document.getElementById('f-name').value;
+        const cred = await createUserWithEmailAndPassword(auth, email, pw);
+        await updateProfile(cred.user, { displayName: name });
+      } else {
+        await signInWithEmailAndPassword(auth, email, pw);
+      }
+    } catch(e) { errEl.textContent = e.message; }
+  };
+}
+
+// ── Trip List ─────────────────────────────────────────────────────
+function renderTripList() {
+  const trips = state.trips;
+  return `
+  <div class="header">
+    <h1>✈️ 旅行帳簿</h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn-icon" id="btn-join" title="加入旅程">🔗</button>
+      <button class="btn-icon" id="btn-create">＋</button>
+      <button class="btn-icon" id="btn-signout" title="登出">👤</button>
+    </div>
+  </div>
+  <div class="page">
+    ${trips.length === 0 ? '<div class="empty">未有旅程<br/>按 ＋ 建立第一個</div>' :
+      trips.map(t => `
+      <div class="card" data-id="${t.id}">
+        <div class="card-row">
+          <div>
+            <div class="card-title">${t.name}</div>
+            <div class="card-sub">📍 ${t.destination}</div>
+            <div class="card-sub">📅 ${fmtDate(t.startDate)} – ${fmtDate(t.endDate)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="tag">${t.baseCurrency}</div>
+            <div class="card-sub" style="margin-top:6px">${t.members?.length || 1} 人</div>
+          </div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+function bindTripList() {
+  document.querySelectorAll('.card[data-id]').forEach(el => {
+    el.onclick = () => {
+      state.currentTrip = state.trips.find(t => t.id === el.dataset.id);
+      listenTripData();
+      render();
+    };
+  });
+  document.getElementById('btn-create').onclick = () => showCreateTripModal();
+  document.getElementById('btn-join').onclick = () => showJoinTripModal();
+  document.getElementById('btn-signout').onclick = () => { signOut(auth); };
+}
+
+// ── Trip Detail ───────────────────────────────────────────────────
+function renderTripDetail() {
+  const trip = state.currentTrip;
+  return `
+  <div class="header">
+    <button class="btn-icon" id="btn-back">←</button>
+    <h1>${trip.name}</h1>
+    <button class="btn-icon" id="btn-invite">🔗</button>
+  </div>
+  <div class="page">
+    <div class="tabs">
+      <button class="tab ${state.tab==='itinerary'?'active':''}" data-tab="itinerary">行程</button>
+      <button class="tab ${state.tab==='expenses'?'active':''}" data-tab="expenses">記帳</button>
+      <button class="tab ${state.tab==='settlement'?'active':''}" data-tab="settlement">結算</button>
+    </div>
+    <div id="tab-content">
+      ${state.tab === 'itinerary' ? renderItinerary() :
+        state.tab === 'expenses' ? renderExpenses() : renderSettlement()}
+    </div>
+  </div>
+  ${state.tab !== 'settlement' ? `<button class="fab" id="btn-fab">＋</button>` : ''}
+  <nav class="bottom-nav">
+    <button class="nav-btn ${state.tab==='itinerary'?'active':''}" data-tab="itinerary">
+      ${svgMap()} 行程
+    </button>
+    <button class="nav-btn ${state.tab==='expenses'?'active':''}" data-tab="expenses">
+      ${svgWallet()} 記帳
+    </button>
+    <button class="nav-btn ${state.tab==='settlement'?'active':''}" data-tab="settlement">
+      ${svgChart()} 結算
+    </button>
+  </nav>`;
+}
+function bindTripDetail() {
+  document.getElementById('btn-back').onclick = () => {
+    state.currentTrip = null; state.tab = 'itinerary';
+    state.unsubs.forEach(u => u()); state.unsubs = [];
+    render();
+  };
+  document.getElementById('btn-invite')?.onclick = () => showInviteModal();
+  document.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.onclick = () => { state.tab = btn.dataset.tab; render(); };
+  });
+  document.getElementById('btn-fab')?.onclick = () => {
+    if (state.tab === 'itinerary') showAddItineraryModal();
+    else if (state.tab === 'expenses') showAddExpenseModal();
+  };
+  // delete items
+  document.querySelectorAll('.del-item').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      if (confirm('確定刪除？')) deleteDoc(doc(db, btn.dataset.col, btn.dataset.id));
+    };
+  });
+}
+
+// ── Itinerary render ──────────────────────────────────────────────
+function renderItinerary() {
+  if (!state.itinerary.length) return '<div class="empty">未有行程<br/>按 ＋ 新增</div>';
+  const groups = {};
+  state.itinerary.forEach(item => {
+    const day = item.date?.split('T')[0] || item.date || '';
+    if (!groups[day]) groups[day] = [];
+    groups[day].push(item);
+  });
+  return Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([day, items]) => `
+    <div class="day-header">${fmtDateStr(day)}</div>
+    ${items.map(item => `
+      <div class="item-row">
+        <div class="item-icon">${ITINERARY_TYPES.find(t=>t.id===item.type)?.icon||'⭐'}</div>
+        <div class="item-info" style="flex:1">
+          <div class="item-title">${item.title}</div>
+          ${item.location ? `<div class="item-sub">📍 ${item.location}</div>` : ''}
+          ${item.notes ? `<div class="item-sub">${item.notes}</div>` : ''}
+          ${item.startTime ? `<div class="item-time">${item.startTime}</div>` : ''}
+        </div>
+        <button class="btn-icon del-item" data-col="itinerary" data-id="${item.id}">🗑</button>
+      </div>`).join('')}
+  `).join('');
+}
+
+// ── Expenses render ───────────────────────────────────────────────
+function renderExpenses() {
+  const trip = state.currentTrip;
+  const total = state.expenses.reduce((s, e) => s + (e.amount * (e.fxRateToBase || 1)), 0);
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div>
+      <div class="card-sub">總支出</div>
+      <div style="font-size:22px;font-weight:800">${trip.baseCurrency} ${total.toFixed(1)}</div>
+    </div>
+    <button class="btn btn-outline" id="btn-scan">📷 掃收據</button>
+  </div>
+  ${state.expenses.length === 0 ? '<div class="empty">未有支出<br/>按 ＋ 或 掃收據</div>' :
+    state.expenses.map(exp => {
+      const cat = EXPENSE_CATS.find(c => c.id === exp.category);
+      const base = exp.amount * (exp.fxRateToBase || 1);
+      return `<div class="expense-row">
+        <div class="expense-icon">${cat?.icon||'💼'}</div>
+        <div class="expense-info">
+          <div class="expense-title">${exp.merchantName || cat?.label || ''}</div>
+          <div class="expense-sub">付款：${exp.payerName} · ${fmtDateStr(exp.date?.split('T')[0]||exp.date||'')}</div>
+          ${exp.notes ? `<div class="expense-sub">${exp.notes}</div>` : ''}
+        </div>
+        <div>
+          <div class="expense-amount">${exp.currency} ${Number(exp.amount).toFixed(1)}</div>
+          ${exp.currency !== trip.baseCurrency ? `<div class="expense-base">≈ ${trip.baseCurrency} ${base.toFixed(1)}</div>` : ''}
+          <button class="btn-icon del-item" data-col="expenses" data-id="${exp.id}" style="float:right">🗑</button>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+// ── Settlement render ─────────────────────────────────────────────
+function renderSettlement() {
+  const trip = state.currentTrip;
+  const balances = calcBalances();
+  const suggestions = calcSettlement(balances);
+  const catTotals = EXPENSE_CATS.map(cat => ({
+    ...cat,
+    total: state.expenses.filter(e => e.category === cat.id)
+      .reduce((s, e) => s + e.amount * (e.fxRateToBase || 1), 0)
+  })).filter(c => c.total > 0);
+  const maxTotal = Math.max(...catTotals.map(c => c.total), 1);
+
+  return `
+  <div class="section-title">每人結餘</div>
+  ${balances.map(b => `
+    <div class="balance-row">
+      <span>${b.name}</span>
+      <span class="${b.balance >= 0 ? 'balance-pos' : 'balance-neg'}">
+        ${b.balance >= 0 ? '+' : ''}${b.balance.toFixed(1)} ${trip.baseCurrency}
+      </span>
+    </div>`).join('')}
+  <div class="divider"></div>
+  <div class="section-title">建議還款</div>
+  ${suggestions.length === 0 ? '<div class="empty" style="padding:16px 0">✅ 已結清</div>' :
+    suggestions.map(s => `
+    <div class="settle-row">
+      <span style="color:var(--red);font-weight:700">${s.from}</span>
+      <span>→</span>
+      <span style="color:var(--green);font-weight:700">${s.to}</span>
+      <span style="margin-left:auto;font-weight:700">${trip.baseCurrency} ${s.amount.toFixed(1)}</span>
+    </div>`).join('')}
+  <div class="divider"></div>
+  <div class="section-title">類別統計</div>
+  ${catTotals.map(c => `
+    <div class="stat-bar-row">
+      <div class="stat-bar-label">
+        <span>${c.icon} ${c.label}</span>
+        <span>${trip.baseCurrency} ${c.total.toFixed(1)}</span>
+      </div>
+      <div class="stat-bar-bg">
+        <div class="stat-bar-fill" style="width:${(c.total/maxTotal*100).toFixed(0)}%"></div>
+      </div>
+    </div>`).join('')}
+  `;
+}
+
+// ── Balance calc ──────────────────────────────────────────────────
+function calcBalances() {
+  const trip = state.currentTrip;
+  const bal = {};
+  trip.members.forEach(m => { bal[m.userId] = { name: m.userName, balance: 0 }; });
+  state.expenses.forEach(exp => {
+    const total = exp.amount * (exp.fxRateToBase || 1);
+    if (bal[exp.payerUserId]) bal[exp.payerUserId].balance += total;
+    const parts = exp.participants || [];
+    const tw = parts.reduce((s, p) => s + (p.weight || 1), 0) || 1;
+    parts.forEach(p => {
+      if (bal[p.userId]) bal[p.userId].balance -= total * ((p.weight || 1) / tw);
+    });
+  });
+  return Object.entries(bal).map(([id, v]) => ({ id, ...v }));
+}
+function calcSettlement(balances) {
+  let credits = balances.filter(b => b.balance > 0.01).map(b => ({...b})).sort((a,b) => b.balance - a.balance);
+  let debts = balances.filter(b => b.balance < -0.01).map(b => ({...b})).sort((a,b) => a.balance - b.balance);
+  const suggestions = [];
+  let ci = 0, di = 0;
+  while (ci < credits.length && di < debts.length) {
+    const amt = Math.min(credits[ci].balance, Math.abs(debts[di].balance));
+    suggestions.push({ from: debts[di].name, to: credits[ci].name, amount: amt });
+    credits[ci].balance -= amt; debts[di].balance += amt;
+    if (credits[ci].balance < 0.01) ci++;
+    if (Math.abs(debts[di].balance) < 0.01) di++;
+  }
+  return suggestions;
+}
+
+// ── Firestore listeners ───────────────────────────────────────────
+function listenTrips() {
+  const uid = state.user.uid;
+  const q = query(collection(db, 'trips'), where('memberIds', 'array-contains', uid));
+  const unsub = onSnapshot(q, snap => {
+    state.trips = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!state.currentTrip) render();
+  });
+  state.unsubs.push(unsub);
+}
+function listenTripData() {
+  const tid = state.currentTrip.id;
+  const uq = onSnapshot(query(collection(db, 'itinerary'),
+    where('tripId', '==', tid)), snap => {
+    state.itinerary = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    if (state.currentTrip) { document.getElementById('tab-content') && updateTabContent(); }
+  });
+  const ue = onSnapshot(query(collection(db, 'expenses'),
+    where('tripId', '==', tid)), snap => {
+    state.expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    if (state.currentTrip) { document.getElementById('tab-content') && updateTabContent(); }
+  });
+  state.unsubs.push(uq, ue);
+}
+function updateTabContent() {
+  const el = document.getElementById('tab-content');
+  if (!el) return;
+  el.innerHTML = state.tab === 'itinerary' ? renderItinerary() :
+    state.tab === 'expenses' ? renderExpenses() : renderSettlement();
+  // re-bind scan + delete
+  document.getElementById('btn-scan')?.addEventListener('click', () => showScanModal());
+  document.querySelectorAll('.del-item').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      if (confirm('確定刪除？')) deleteDoc(doc(db, btn.dataset.col, btn.dataset.id));
+    };
+  });
+}
+
+// ── Modals ────────────────────────────────────────────────────────
+function modal(html, onBind) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal">${html}</div>`;
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+  onBind?.(overlay);
+  return overlay;
+}
+function showToast(msg) {
+  let t = document.querySelector('.toast');
+  if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showCreateTripModal() {
+  const m = modal(`
+    <div class="modal-title">建立旅程</div>
+    <div class="form-group"><label>旅程名稱</label><input id="m-name" placeholder="例：東京五日遊"/></div>
+    <div class="form-group"><label>目的地</label><input id="m-dest" placeholder="例：東京"/></div>
+    <div class="row-2">
+      <div class="form-group"><label>出發日</label><input id="m-start" type="date"/></div>
+      <div class="form-group"><label>回程日</label><input id="m-end" type="date"/></div>
+    </div>
+    <div class="form-group"><label>基本貨幣</label>
+      <select id="m-cur">${CURRENCIES.map(c=>`<option>${c}</option>`).join('')}</select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="m-save">建立</button>
+    </div>`, m => {
+    m.querySelector('#m-save').onclick = async () => {
+      const name = m.querySelector('#m-name').value.trim();
+      const dest = m.querySelector('#m-dest').value.trim();
+      if (!name) return;
+      const member = { userId: state.user.uid, userName: state.user.displayName || state.user.email, role: 'owner' };
+      const code = Math.random().toString(36).slice(2,8).toUpperCase();
+      await addDoc(collection(db, 'trips'), {
+        name, destination: dest,
+        startDate: m.querySelector('#m-start').value,
+        endDate: m.querySelector('#m-end').value,
+        baseCurrency: m.querySelector('#m-cur').value,
+        members: [member], memberIds: [state.user.uid],
+        inviteCode: code, createdBy: state.user.uid,
+        createdAt: serverTimestamp()
+      });
+      m.remove(); showToast('旅程已建立 ✅');
+    };
+  });
+}
+
+function showJoinTripModal() {
+  const m = modal(`
+    <div class="modal-title">加入旅程</div>
+    <div class="form-group"><label>邀請碼</label>
+      <input id="m-code" placeholder="輸入6位邀請碼" style="text-transform:uppercase;letter-spacing:4px;font-size:20px;text-align:center"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="m-join">加入</button>
+    </div>`, m => {
+    m.querySelector('#m-join').onclick = async () => {
+      const code = m.querySelector('#m-code').value.trim().toUpperCase();
+      const q = query(collection(db, 'trips'), where('inviteCode', '==', code));
+      const snap = await getDocs(q);
+      if (snap.empty) { showToast('找不到此旅程 ❌'); return; }
+      const tripDoc = snap.docs[0];
+      const tripData = tripDoc.data();
+      if (tripData.memberIds?.includes(state.user.uid)) { showToast('你已是成員'); m.remove(); return; }
+      const newMember = { userId: state.user.uid, userName: state.user.displayName || state.user.email, role: 'editor' };
+      await updateDoc(doc(db, 'trips', tripDoc.id), {
+        members: [...(tripData.members||[]), newMember],
+        memberIds: [...(tripData.memberIds||[]), state.user.uid]
+      });
+      m.remove(); showToast('成功加入旅程 ✅');
+    };
+  });
+}
+
+function showInviteModal() {
+  const trip = state.currentTrip;
+  modal(`
+    <div class="modal-title" style="text-align:center">邀請朋友加入</div>
+    <div style="text-align:center">📍 ${trip.name}</div>
+    <div class="invite-code" id="invite-code-txt">${trip.inviteCode}</div>
+    <button class="btn btn-primary" id="m-copy">複製邀請碼</button>
+    <div style="margin-top:10px">
+      <button class="btn btn-outline" id="m-share" style="width:100%;justify-content:center">
+        分享
+      </button>
+    </div>`, m => {
+    m.querySelector('#m-copy').onclick = () => {
+      navigator.clipboard.writeText(trip.inviteCode);
+      showToast('邀請碼已複製 ✅');
+    };
+    m.querySelector('#m-share').onclick = () => {
+      if (navigator.share) {
+        navigator.share({ title: `加入旅程《${trip.name}》`, text: `邀請碼：${trip.inviteCode}，下載旅行帳簿即可加入。` });
+      } else {
+        navigator.clipboard.writeText(`加入旅程《${trip.name}》邀請碼：${trip.inviteCode}`);
+        showToast('已複製分享內容 ✅');
+      }
+    };
+  });
+}
+
+function showAddItineraryModal(prefill = {}) {
+  const trip = state.currentTrip;
+  const m = modal(`
+    <div class="modal-title">新增行程</div>
+    <div class="form-group"><label>標題</label><input id="m-title" placeholder="例：淺草寺" value="${prefill.title||''}"/></div>
+    <div class="row-2">
+      <div class="form-group"><label>日期</label><input id="m-date" type="date" value="${prefill.date||''}"/></div>
+      <div class="form-group"><label>類型</label>
+        <select id="m-type">${ITINERARY_TYPES.map(t=>`<option value="${t.id}">${t.icon} ${t.label}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="form-group"><label>開始時間</label><input id="m-stime" type="time"/></div>
+      <div class="form-group"><label>結束時間</label><input id="m-etime" type="time"/></div>
+    </div>
+    <div class="form-group"><label>地點</label><input id="m-loc" placeholder="地址或地點名"/></div>
+    <div class="form-group"><label>備註</label><textarea id="m-notes" placeholder="備註..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="m-save">儲存</button>
+    </div>`, m => {
+    m.querySelector('#m-save').onclick = async () => {
+      const title = m.querySelector('#m-title').value.trim();
+      if (!title) return;
+      await addDoc(collection(db, 'itinerary'), {
+        tripId: trip.id,
+        title, date: m.querySelector('#m-date').value,
+        type: m.querySelector('#m-type').value,
+        startTime: m.querySelector('#m-stime').value,
+        endTime: m.querySelector('#m-etime').value,
+        location: m.querySelector('#m-loc').value,
+        notes: m.querySelector('#m-notes').value,
+        createdAt: serverTimestamp()
+      });
+      m.remove(); showToast('行程已新增 ✅');
+    };
+  });
+}
+
+function showAddExpenseModal(prefill = {}) {
+  const trip = state.currentTrip;
+  const myName = state.user.displayName || state.user.email;
+  const m = modal(`
+    <div class="modal-title">新增支出</div>
+    <div class="form-group"><label>商戶／描述</label>
+      <input id="m-merchant" placeholder="例：一蘭拉麵" value="${prefill.merchant||''}"/>
+    </div>
+    <div class="row-3">
+      <div class="form-group"><label>金額</label>
+        <input id="m-amount" type="number" placeholder="0.00" value="${prefill.amount||''}"/>
+      </div>
+      <div class="form-group"><label>貨幣</label>
+        <select id="m-cur">${CURRENCIES.map(c=>`<option ${c===(prefill.currency||trip.baseCurrency)?'selected':''}>${c}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>匯率</label>
+        <input id="m-fx" type="number" value="${prefill.fx||1}" placeholder="1.0"/>
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="form-group"><label>分類</label>
+        <select id="m-cat">${EXPENSE_CATS.map(c=>`<option value="${c.id}">${c.icon} ${c.label}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>日期</label>
+        <input id="m-date" type="date" value="${prefill.date||new Date().toISOString().split('T')[0]}"/>
+      </div>
+    </div>
+    <div class="form-group"><label>付款人</label>
+      <select id="m-payer">
+        ${trip.members.map(mem=>`<option value="${mem.userId}" ${mem.userId===state.user.uid?'selected':''}>${mem.userName}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>AA 參與者</label>
+      <div class="chip-row" id="participants-chips">
+        ${trip.members.map(mem=>`<div class="chip selected" data-uid="${mem.userId}" data-name="${mem.userName}">${mem.userName}</div>`).join('')}
+      </div>
+    </div>
+    <div class="form-group"><label>備註</label><input id="m-notes" placeholder="備註"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="m-save">儲存</button>
+    </div>`, m => {
+    m.querySelectorAll('.chip').forEach(chip => {
+      chip.onclick = () => chip.classList.toggle('selected');
+    });
+    m.querySelector('#m-save').onclick = async () => {
+      const amount = parseFloat(m.querySelector('#m-amount').value);
+      if (!amount) return;
+      const payerId = m.querySelector('#m-payer').value;
+      const payerMem = trip.members.find(mem => mem.userId === payerId);
+      const selectedChips = [...m.querySelectorAll('.chip.selected')];
+      const participants = selectedChips.map(c => ({ userId: c.dataset.uid, userName: c.dataset.name, weight: 1 }));
+      const currency = m.querySelector('#m-cur').value;
+      const fx = parseFloat(m.querySelector('#m-fx').value) || 1;
+      await addDoc(collection(db, 'expenses'), {
+        tripId: trip.id,
+        payerUserId: payerId, payerName: payerMem?.userName || myName,
+        participants, amount, currency,
+        fxRateToBase: currency === trip.baseCurrency ? 1 : fx,
+        category: m.querySelector('#m-cat').value,
+        merchantName: m.querySelector('#m-merchant').value,
+        notes: m.querySelector('#m-notes').value,
+        date: m.querySelector('#m-date').value,
+        createdAt: serverTimestamp()
+      });
+      m.remove(); showToast('支出已記錄 ✅');
+    };
+  });
+}
+
+// ── Receipt Scanner (Tesseract.js) ────────────────────────────────
+function showScanModal() {
+  const m = modal(`
+    <div class="modal-title">📷 掃描收據</div>
+    <div class="scan-area" id="scan-area">
+      <div style="font-size:40px">📄</div>
+      <div style="font-size:15px;color:var(--gray);margin-top:8px">點此拍照或選取相片</div>
+      <input type="file" id="scan-input" accept="image/*" capture="environment"
+        style="position:absolute;inset:0;opacity:0;cursor:pointer"/>
+    </div>
+    <div id="scan-status" style="text-align:center;color:var(--gray);font-size:14px"></div>
+    <div id="scan-result" style="display:none">
+      <div class="scan-result" id="scan-result-box"></div>
+      <button class="btn btn-primary" id="m-use-result" style="margin-top:12px">用作支出記錄</button>
+    </div>`, m => {
+    let parsed = {};
+    m.querySelector('#scan-input').onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      m.querySelector('#scan-status').textContent = '正在識別…';
+      // Load Tesseract if not already loaded
+      if (!window.Tesseract) {
+        await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+      }
+      try {
+        const { data: { text } } = await Tesseract.recognize(file, 'chi_tra+chi_sim+eng', {
+          logger: info => { if (info.status === 'recognizing text')
+            m.querySelector('#scan-status').textContent = `識別中 ${Math.round((info.progress||0)*100)}%`;
+          }
+        });
+        parsed = parseReceipt(text);
+        m.querySelector('#scan-status').textContent = '識別完成 ✅';
+        m.querySelector('#scan-result').style.display = 'block';
+        m.querySelector('#scan-result-box').innerHTML = `
+          <div class="scan-result-row"><span>商戶</span><b>${parsed.merchant || '未識別'}</b></div>
+          <div class="scan-result-row"><span>金額</span><b>${parsed.amount || '未識別'}</b></div>
+          <div class="scan-result-row"><span>貨幣</span><b>${parsed.currency || 'HKD'}</b></div>
+          <div class="scan-result-row"><span>日期</span><b>${parsed.date || '未識別'}</b></div>
+        `;
+      } catch(err) {
+        m.querySelector('#scan-status').textContent = '識別失敗，請手動輸入';
+      }
+    };
+    m.querySelector('#m-use-result')?.addEventListener('click', () => {
+      m.remove();
+      showAddExpenseModal({
+        merchant: parsed.merchant || '',
+        amount: parsed.amount || '',
+        currency: parsed.currency || state.currentTrip.baseCurrency,
+        date: parsed.date || new Date().toISOString().split('T')[0]
+      });
+    });
+  });
+}
+
+function parseReceipt(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let merchant, amount, currency, date;
+
+  // Currency
+  const currencies = ['HKD','USD','JPY','EUR','GBP','TWD','SGD','CNY','KRW','AUD'];
+  for (const c of currencies) {
+    if (text.toUpperCase().includes(c)) { currency = c; break; }
+  }
+  if (!currency) {
+    if (text.includes('$') || text.includes('港幣')) currency = 'HKD';
+    else if (text.includes('¥') || text.includes('円')) currency = 'JPY';
+    else if (text.includes('€')) currency = 'EUR';
+  }
+
+  // Merchant
+  merchant = lines.find(l => l.length > 2 && !/\d{3,}/.test(l));
+
+  // Total
+  const totalKw = ['TOTAL','Total','合計','總額','总额','AMOUNT DUE','應付'];
+  for (let i = 0; i < lines.length; i++) {
+    if (totalKw.some(kw => lines[i].toUpperCase().includes(kw.toUpperCase()))) {
+      const a = extractAmt(lines[i]) || (i+1 < lines.length ? extractAmt(lines[i+1]) : null);
+      if (a) { amount = a; break; }
+    }
+  }
+  if (!amount) {
+    const nums = lines.map(l => extractAmt(l)).filter(Boolean);
+    amount = nums.length ? Math.max(...nums) : null;
+  }
+
+  // Date
+  const dateM = text.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+  if (dateM) date = `${dateM[1]}-${String(dateM[2]).padStart(2,'0')}-${String(dateM[3]).padStart(2,'0')}`;
+
+  return { merchant, amount: amount ? String(amount) : '', currency, date };
+}
+function extractAmt(str) {
+  const m = str.match(/[\d,，]+\.?\d*/g);
+  if (!m) return null;
+  const nums = m.map(n => parseFloat(n.replace(/,|，/g, ''))).filter(n => n > 0);
+  return nums.length ? Math.max(...nums) : null;
+}
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = src;
+    s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '';
+  const date = d?.toDate ? d.toDate() : new Date(d);
+  return date.toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' });
+}
+function fmtDateStr(str) {
+  if (!str) return '';
+  const d = new Date(str);
+  return d.toLocaleDateString('zh-HK', { weekday: 'short', month: 'long', day: 'numeric' });
+}
+
+// ── SVG Icons ─────────────────────────────────────────────────────
+const svgMap = () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+const svgWallet = () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>`;
+const svgChart = () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>`;
+
+// ── Register Service Worker ───────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+onAuthStateChanged(auth, user => {
+  state.user = user;
+  state.unsubs.forEach(u => u()); state.unsubs = [];
+  if (user) listenTrips();
+  render();
+});
+
+  </script>
+</body>
+</html>
